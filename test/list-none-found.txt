@@ -1,0 +1,3 @@
+nonexistent-package ( 1.0.0 )
+another-missing ( 2.0.0 )
+not-installed ( 3.0.0 )
