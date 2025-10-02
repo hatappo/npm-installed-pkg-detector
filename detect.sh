@@ -71,29 +71,16 @@ search_package() {
     ((total_packages++))
 
     # First check package existence (regardless of version)
+    # For lockfileVersion 3, only check packages section (excluding root package "")
     local found_packages=$(jq -r --arg name "$pkg_name" '
         [
-            # Check top-level dependencies and devDependencies (for lockfileVersion 2 and earlier)
-            if .dependencies[$name] then
-                {location: "dependencies", version: .dependencies[$name]}
-            else empty end,
-            if .devDependencies[$name] then
-                {location: "devDependencies", version: .devDependencies[$name]}
-            else empty end,
-            # Check packages."" dependencies and devDependencies (for lockfileVersion 3)
-            if .packages[""].dependencies[$name] then
-                {location: "dependencies", version: .packages[""].dependencies[$name]}
-            else empty end,
-            if .packages[""].devDependencies[$name] then
-                {location: "devDependencies", version: .packages[""].devDependencies[$name]}
-            else empty end,
-            # Check packages section
-            (
-                .packages | to_entries[] |
-                select(.key | test("(^|/)\\Q\($name)\\E$")) |
-                {location: .key, version: .value.version}
-            )
-        ] | unique_by(.version)
+            # Check all packages in packages section
+            # Check if key equals package name or ends with "/<package-name>"
+            .packages |
+            to_entries[] |
+            select(.key == $name or (.key | endswith("/" + $name))) |
+            .value.version
+        ] | unique
     ' "$LOCKFILE" 2>/dev/null)
 
     if [ -z "$found_packages" ] || [ "$found_packages" = "[]" ]; then
@@ -105,7 +92,7 @@ search_package() {
 
     # If package was found
     ((detected_packages++))
-    local found_versions=$(echo "$found_packages" | jq -r '.[].version' | sort -u | tr '\n' ' ')
+    local found_versions=$(echo "$found_packages" | jq -r '.[]' | sort -u | tr '\n' ' ')
     echo "✓ $pkg_name: detected (target versions: $found_versions)"
 
     # Check specific versions
@@ -121,7 +108,7 @@ search_package() {
 
             # Check if version exists
             local version_found=$(echo "$found_packages" | jq -r --arg v "$version" '
-                .[] | select(.version == $v) | .version
+                .[] | select(. == $v)
             ' | head -1)
 
             if [ -n "$version_found" ]; then
