@@ -12,11 +12,6 @@ Arguments:
 Example:
   $0 facebook/react package-list.txt
 
-Requirements:
-  - gh (GitHub CLI) must be installed and authenticated
-  - jq must be installed
-  - base64 command must be available
-
 Exit codes:
   0 - Normal exit (no version matches)
   1 - Error

@@ -13,11 +13,6 @@ Examples:
   $0 facebook package-list.txt
   $0 microsoft vulnerable-packages.txt
 
-Requirements:
-  - gh (GitHub CLI) must be installed and authenticated
-  - jq must be installed
-  - detect-remote.sh must exist in the same directory
-
 Exit codes:
   0 - No detections in all repositories
   1 - Error
